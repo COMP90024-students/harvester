@@ -50,7 +50,9 @@ def tweetByTopic(api):
 def tweetStream(api):
     next_search_id = 0
     while True:
-        SEARCH_QUERY_STRING = "place:3f14ce28dc7c4566  coronavirus -filter:retweets"
+        "https://twitter.com/search?q=coronavirus%20netflix%20%20(coronavirus%20OR%20netflix)%20lang%3Aen&src=typed_query"
+        SEARCH_QUERY_STRING = "place_country:AU coronavirus netflix (coronavirus OR netflix) lang:en  -filter:retweets"
+        #SEARCH_QUERY_STRING = "place:3f14ce28dc7c4566  coronavirus -filter:retweets"
         status = api.search(q=SEARCH_QUERY_STRING,
                 geocode="-37.814124,144.963913,10km",
                 since_id=next_search_id,
@@ -79,7 +81,8 @@ def harvestTweets():
 
     api = tweepy.API(auth, parser=tweepy.parsers.JSONParser())
     #tweetByTopic(api)
-    streamByQuery(api)
-
+    tweetByTopic(api)
+'''
 if __name__ == '__main__':
     harvestTweets()
+'''
