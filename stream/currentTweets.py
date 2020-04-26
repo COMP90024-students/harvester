@@ -49,12 +49,11 @@ def processTweet(tweet):
 
 def storeDatabase(idTweet, tweet):
     #print(idTweet)
-    #if idTweet not in db.view('tweet/tweetID-view')['_id']:
+    #idTweet not in db.view('tweet/tweetID-view')['_id']:
     try:
         db[idTweet] = tweet
     except:
         print(idTweet)
-        next
 
 
 def getPlace(data):

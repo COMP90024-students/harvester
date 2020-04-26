@@ -15,21 +15,12 @@ API_SECRET_KEY = '4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj'
 ACCESS_TOKEN = '1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac'
 ACCESS_TOKEN_SECRET = 'K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC'
 
-QUERY_GET_TWEETS = "place:3f14ce28dc7c4566 lang:en -filter:retweets"
+QUERY_GET_TWEETS = "place:3f14ce28dc7c4566  lang:en -filter:retweets"
 
 def setCredentials():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     return tweepy.API(auth)
-
-def storeDatabase(idTweet, tweet):
-    #print(idTweet)
-    #if idTweet not in db.view('tweet/tweetID-view')['_id']:
-    try:
-        db[idTweet] = tweet
-    except:
-        print(idTweet)
-        next
 
 def getPlace(data):
     result = None
@@ -39,8 +30,9 @@ def getPlace(data):
         result = data['user']['location']
     return result
 
-def processTweet(tweet):
+def saveTweetInDatabse(tweet):
     pro_tweet = {}
+    #Determines fields to save in json record
     if "_rev" in pro_tweet: del pro_tweet["_rev"]
     idTweet = tweet['id_str']
     pro_tweet['username'] = tweet['user']['name']
@@ -54,7 +46,13 @@ def processTweet(tweet):
         pro_tweet['text'] = tweet['text']
     elif 'full_text' in tweet:
         pro_tweet['text'] = tweet['full_text']
-    storeDatabase(idTweet, pro_tweet)
+
+    #Save json record in couchdb
+    try:
+        db[idTweet] = pro_tweet
+    except:
+        print(idTweet)
+        next
 
 
 def tweetProcessor(api_interface):
@@ -64,7 +62,7 @@ def tweetProcessor(api_interface):
             tweets = api_interface.search(q = QUERY_GET_TWEETS, since_id=next_search_id,count=100)
             for tweet in tweets:
                 print(tweet._json)
-                processTweet(tweet._json)
+                saveTweetInDatabse(tweet._json)
 
             next_results = tweets['search_metadata']["next_results"]
             # Replace '&' with '=' and split string by '='
