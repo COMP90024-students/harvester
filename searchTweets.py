@@ -51,9 +51,8 @@ def processTweet(tweet):
 
 
 def tweetByTopic(api):
-    query = "place:3f14ce28dc7c4566 lang:en -filter:retweets"
-    maxTweets = 20000
-    count = 0
+    query = "place:3f14ce28dc7c4566  lang:en -filter:retweets"
+    maxTweets = 2000
     for tweet in tweepy.Cursor(api.search, q=query,tweet_mode='extended').items(maxTweets):
         processTweet(tweet._json)
 
