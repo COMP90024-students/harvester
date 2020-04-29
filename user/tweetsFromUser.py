@@ -68,7 +68,8 @@ def saveTweetInDatabse(tweet):
     pro_tweet['geo'] = tweet['geo']
     pro_tweet['coordinates'] = tweet['coordinates']
 
-    print(pro_tweet)
+    #print(pro_tweet)
+
     #Save json record in couchdb
     if idTweet not in db:
         db[idTweet] = tweet
