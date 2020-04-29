@@ -3,6 +3,8 @@ import tweepy
 import json
 import time
 import couchdb
+import re
+from textblob import TextBlob
 
 from tweepy.streaming import StreamListener
 
@@ -11,75 +13,113 @@ couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
 global db
 db = couch['db_test']
 
-AUS_LAT_MIN = -44
-AUS_LON_MIN = 110
-AUS_LAT_MAX = -9
-AUS_LON_MAX =156
-
 API_KEY = 'Y9QPnFuofPJDysYtfq3OJrIlp'
 API_SECRET_KEY = '4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj'
 ACCESS_TOKEN = '1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac'
 ACCESS_TOKEN_SECRET = 'K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC'
 
+POSITIVE_SENTIMENT = 1
+NEGATIVE_SENTIMENT = -1
+NEUTRAL_SENTIMENT = 0
+
+AUS_LAT_MIN = -44
+AUS_LON_MIN = 110
+AUS_LAT_MAX = -9
+AUS_LON_MAX =156
+
+TOPIC_ONE = ['coronavirus', 'covid', 'covid19', 'pandemic', 'virus']
+TOPIC_TWO = ['racism', 'racist', 'xenophobe', 'discrimination', 'segregation', 'bigot', 'bigotry', 'racialism']
+
 class MyStreamListener(tweepy.StreamListener):
     def on_data(self, data):
         data = json.loads(data)
-        processTweet(data)
-        print(data)
+        saveTweetInDatabse(data)
 
     def on_error(self, status):
         print("Streaming error status : " + status)
 
-def processTweet(tweet):
-    pro_tweet = {}
-    if "_rev" in pro_tweet: del pro_tweet["_rev"]
-    idTweet = tweet['id_str']
-    pro_tweet['username'] = tweet['user']['name']
-    pro_tweet['userId'] = tweet['user']['id']
-    pro_tweet['created_at'] = tweet['created_at']
-    pro_tweet['placeRaw'] = tweet['place']
-    pro_tweet['geoRaw'] = tweet['geo']
-    pro_tweet['coordinatesRaw'] = tweet['coordinates']
-    pro_tweet['place'] = getPlace(tweet)
-    if 'text' in tweet:
-        pro_tweet['text'] = tweet['text']
-    elif 'full_text' in tweet:
-        pro_tweet['text'] = tweet['full_text']
-    storeDatabase(idTweet, pro_tweet)
+def setCredentials():
+    auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    return tweepy.API(auth)
 
-def storeDatabase(idTweet, tweet):
-    #print(idTweet)
-    #idTweet not in db.view('tweet/tweetID-view')['_id']:
-    try:
-        db[idTweet] = tweet
-    except:
+def inTopic(tweet):
+    tweet = tweet.split()
+    flag_one = False
+    flag_two = False
+    number = 0
+    for word in TOPIC_ONE:
+        if word in tweet:
+            flag_one = True
+            break
+    for word in TOPIC_TWO:
+        if word in tweet:
+            flag_two = True
+            break
+    if flag_one and flag_two:
+        number = 3
+    elif not flag_one and flag_two:
+        number = 2
+    elif flag_one and not flag_two:
+        number = 1
+    else:
+        number = 0
+    return number
+
+def cleanTweet(tweet):
+    tweet = re.sub(r"(?:\@|https?\://)\S+", '', tweet, flags=re.MULTILINE)
+    tweet = re.sub('[^A-Za-z0-9]+', ' ', tweet)
+    tweet = tweet.lower()
+    return tweet
+
+def getSentiment(text):
+    blob = TextBlob(text)
+    sentiment = blob.sentiment.polarity
+    if sentiment > 0:
+        return POSITIVE_SENTIMENT
+    elif sentiment < 0:
+        return NEGATIVE_SENTIMENT
+    return NEUTRAL_SENTIMENT
+
+def saveTweetInDatabse(tweet):
+    pro_tweet = {}
+    #Determines fields to save in json record
+    idTweet = tweet['id_str']
+
+    pro_tweet['creation_date'] = tweet['created_at']
+    pro_tweet['text'] = cleanTweet(tweet['text'])
+    pro_tweet['tweet_sentiment'] = getSentiment(pro_tweet['text'])
+
+    pro_tweet['userId'] = tweet['user']['id_str']
+    pro_tweet['username'] = tweet['user']['name']
+    pro_tweet['screen_name'] = tweet['user']['screen_name']
+    pro_tweet['user_location'] = tweet['user']['location']
+    pro_tweet['followers_count'] = tweet['user']['followers_count']
+    pro_tweet['geo_enabled'] = tweet['user']['geo_enabled']
+
+    pro_tweet['place'] = tweet['place']
+    pro_tweet['geo'] = tweet['geo']
+    pro_tweet['coordinates'] = tweet['coordinates']
+    pro_tweet['topic'] = inTopic(pro_tweet['text'])
+    #Save json record in couchdb
+    if idTweet not in db:
+        db[idTweet] = pro_tweet
         print(idTweet)
 
-
-def getPlace(data):
-    result = None
-    if data['place']:
-        result = data['place']['name']
-    elif data['user']['location']:
-        result = data['user']['location']
-    return result
-
-def streamTweet(api):
-    myStreamListener = MyStreamListener()
-    myStream = tweepy.Stream(auth = api.auth, listener=myStreamListener)
+def tweetProcessor(api):
+    my_stream_listener = MyStreamListener()
+    my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
     try:
-        myStream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
-
+        my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
     except tweepy.RateLimitError:
-        print("Error while streaming")
-
+        print("Error")
 
 def harvestTweets():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-    api = tweepy.API(auth)
-    streamTweet(api)
+    api_interface = setCredentials()
+    tweetProcessor(api_interface)
 
 if __name__ == '__main__':
     harvestTweets()
