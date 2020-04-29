@@ -8,13 +8,14 @@ couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
 #couch = couchdb.Server('username:password@server name ')
 
 #Create database
-db = couch.create('db_test')
+#db = couch.create('db_test')
 #If using existing one
 
-#db = couch['db_test']
+db = couch['db_test']
 
-#print(list(db.view('tweet/tweetID-view')['key']))
-
+#print(list(db.view('tweet/userID-view')['key']))
+for row in db.view('tweet/userID-view'):
+    row['key']
 '''
 db['100'] = {'hola': 'hola'}
 
