@@ -26,13 +26,15 @@ QUERY_LANGUAGE = "lang:en "
 QUERY_RETWEET_FLAG = "-filter:retweets"
 
 TOPIC_ONE = '(COVID AND app) OR (covid AND app) OR (Covidsafe AND app) OR (COVIDSafe AND app) OR (safe AND app) OR (tracing AND app) OR (CovidSafe AND app) OR (PM and app) OR (tracking AND app)'
-TOPIC_TWO = '(scomo) OR (Scott AND Morrison) OR (Goverment)'
+TOPIC_TWO = '(scomo) OR (Morrison) OR (Goverment) OR (morrison) OR (gov OR Gov OR Govt) OR (Jobseeker OR jobseeker) OR (Jobkeeper OR jobkeeper) OR unemployment OR minister OR parliament OR corruption OR (PM OR PM) OR premier OR victorians '
+TOPIC_THREE = 'app'
 #
 
 def setTopics():
     QUERY_TOPIC = []
     QUERY_TOPIC.append(TOPIC_ONE)
     QUERY_TOPIC.append(TOPIC_TWO)
+    QUERY_TOPIC.append(TOPIC_THREE)
     return QUERY_TOPIC
 
 def setCredentials():
@@ -95,9 +97,11 @@ def tweetProcessor(api_interface):
         query = QUERY_PLACE + topic + QUERY_LANGUAGE + QUERY_RETWEET_FLAG
         if topic == TOPIC_ONE:
             number = 1
-        else:
+        elif topic == TOPIC_TWO:
             number = 2
-        for tweet in tweepy.Cursor(api_interface.search, q=query,tweet_mode='extended').items(1000):
+        else:
+            number = 3
+        for tweet in tweepy.Cursor(api_interface.search, q=query,tweet_mode='extended').items(10000):
             print(tweet._json)
             saveTweetInDatabse(tweet._json, 1)
 

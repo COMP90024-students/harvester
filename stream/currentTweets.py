@@ -38,8 +38,7 @@ class MyStreamListener(tweepy.StreamListener):
         saveTweetInDatabse(data)
 
     def on_error(self, status):
-        next
-        #print("Streaming error status : " + status)
+        print("Streaming error")
 
 def setCredentials():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
@@ -117,15 +116,12 @@ def saveTweetInDatabse(tweet):
         print(idTweet)
 
 def tweetProcessor(api):
-    while True:
-        my_stream_listener = MyStreamListener()
-        my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
-        try:
-            my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
-        except tweepy.RateLimitError:
-            print("Error")
-            continue
-        time.sleep(10)
+    my_stream_listener = MyStreamListener()
+    my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
+    try:
+        my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
+    except tweepy.RateLimitError:
+        print("Error")
 def harvestTweets():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
