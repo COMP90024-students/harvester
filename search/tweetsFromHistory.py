@@ -25,14 +25,14 @@ QUERY_PLACE = "place:3f14ce28dc7c4566 "
 QUERY_LANGUAGE = "lang:en "
 QUERY_RETWEET_FLAG = "-filter:retweets"
 
-TOPIC = ['racism', 'racist', 'coronavirus', 'covid19', 'chinese']
+TOPIC_ONE = '(COVID AND app) OR (covid AND app) OR (Covidsafe AND app) OR (COVIDSafe AND app) OR (safe AND app) OR (tracing AND app) OR (CovidSafe AND app) OR (PM and app) OR (tracking AND app)'
+TOPIC_TWO = '(scomo) OR (Scott AND Morrison) OR (Goverment)'
 #
 
 def setTopics():
     QUERY_TOPIC = []
-    QUERY_TOPIC.append('(coronavirus OR covid OR covid19 OR pandemic OR virus) AND (racism OR racist OR xenophobe OR discrimination OR segregation OR bigot OR bigotry OR racialism) ')
-    QUERY_TOPIC.append('(coronavirus OR covid OR covid19 OR pandemic OR virus)')
-    QUERY_TOPIC.append('(racism OR racist OR xenophobe OR discrimination OR segregation OR bigot OR bigotry OR racialism) ')
+    QUERY_TOPIC.append(TOPIC_ONE)
+    QUERY_TOPIC.append(TOPIC_TWO)
     return QUERY_TOPIC
 
 def setCredentials():
@@ -55,13 +55,13 @@ def getSentiment(text):
         return NEGATIVE_SENTIMENT
     return NEUTRAL_SENTIMENT
 
-def saveTweetInDatabse(tweet, topic):
+def saveTweetInDatabse(tweet, number):
     pro_tweet = {}
     #Determines fields to save in json record
     idTweet = tweet['id_str']
 
     pro_tweet['creation_date'] = tweet['created_at']
-    pro_tweet['text'] = cleanTweet(tweet['text'])
+    pro_tweet['text'] = cleanTweet(tweet['full_text'])
     pro_tweet['tweet_sentiment'] = getSentiment(pro_tweet['text'])
 
     pro_tweet['userId'] = tweet['user']['id_str']
@@ -75,30 +75,31 @@ def saveTweetInDatabse(tweet, topic):
     pro_tweet['geo'] = tweet['geo']
     pro_tweet['coordinates'] = tweet['coordinates']
 
-    pro_tweet['topic'] = topic
+    pro_tweet['topic'] = number
 
     #Save json record in couchdb
-    if idTweet not in db:
-        db[idTweet] = tweet
-        print(idTweet)
+    #if idTweet not in db:
+    try:
+        print(idTweet, pro_tweet )
+        db[idTweet] = pro_tweet
+    except:
+        next
+    return tweet['id']
+
 
 def tweetProcessor(api_interface):
     next_search_id = 0
-    while True:
-        try:
-            topics = setTopics()
-            for topic in topics:
-                query = QUERY_PLACE + topic + QUERY_LANGUAGE + QUERY_RETWEET_FLAG
-                tweets = api_interface.search(q = query, since_id=next_search_id,count=100)
-                for tweet in tweets:
-                    saveTweetInDatabse(tweet._json, topic)
-
-            next_results = tweets['search_metadata']["next_results"]
-            # Replace '&' with '=' and split string by '='
-            next_search_id = next_results.replace('&', '=').split('=')[1]
-        except:
-            continue
-        time.sleep(5.05)
+    last = 0
+    topics = setTopics()
+    for topic in topics:
+        query = QUERY_PLACE + topic + QUERY_LANGUAGE + QUERY_RETWEET_FLAG
+        if topic == TOPIC_ONE:
+            number = 1
+        else:
+            number = 2
+        for tweet in tweepy.Cursor(api_interface.search, q=query,tweet_mode='extended').items(1000):
+            print(tweet._json)
+            saveTweetInDatabse(tweet._json, 1)
 
 def harvestTweets():
     api_interface = setCredentials()

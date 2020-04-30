@@ -27,8 +27,10 @@ AUS_LON_MIN = 110
 AUS_LAT_MAX = -9
 AUS_LON_MAX =156
 
-TOPIC_ONE = ['coronavirus', 'covid', 'covid19', 'pandemic', 'virus']
-TOPIC_TWO = ['racism', 'racist', 'xenophobe', 'discrimination', 'segregation', 'bigot', 'bigotry', 'racialism']
+TOPIC_ONE = ['covid app', 'covidsafe', 'safe app', 'safeapp', 'tracing app', 'tracking app', 'covid safe app']
+TOPIC_TWO = ['scomo', 'morrison', 'government', 'gov', 'jobseeker', 'jobkeeper', 'unemployment', 'minister', 'parliament', 'corruption', 'pm', 'premier', 'victorians', 'govt']
+TOPIC_THREE = ['app']
+
 
 class MyStreamListener(tweepy.StreamListener):
     def on_data(self, data):
@@ -36,7 +38,8 @@ class MyStreamListener(tweepy.StreamListener):
         saveTweetInDatabse(data)
 
     def on_error(self, status):
-        print("Streaming error status : " + status)
+        next
+        #print("Streaming error status : " + status)
 
 def setCredentials():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
@@ -47,6 +50,7 @@ def inTopic(tweet):
     tweet = tweet.split()
     flag_one = False
     flag_two = False
+    flag_three = False
     number = 0
     for word in TOPIC_ONE:
         if word in tweet:
@@ -56,11 +60,17 @@ def inTopic(tweet):
         if word in tweet:
             flag_two = True
             break
-    if flag_one and flag_two:
+    for word in TOPIC_THREE:
+        if word in tweet:
+            flag_three = True
+            break
+    if flag_three == True:
+        number = 4
+    if flag_one == True and flag_two == True:
         number = 3
-    elif not flag_one and flag_two:
+    elif flag_one == False and flag_two == True:
         number = 2
-    elif flag_one and not flag_two:
+    elif flag_one == True and not flag_two == False:
         number = 1
     else:
         number = 0
@@ -102,18 +112,20 @@ def saveTweetInDatabse(tweet):
     pro_tweet['coordinates'] = tweet['coordinates']
     pro_tweet['topic'] = inTopic(pro_tweet['text'])
     #Save json record in couchdb
-    if idTweet not in db:
+    if idTweet not in db and pro_tweet['topic'] > 0:
         db[idTweet] = pro_tweet
         print(idTweet)
 
 def tweetProcessor(api):
-    my_stream_listener = MyStreamListener()
-    my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
-    try:
-        my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
-    except tweepy.RateLimitError:
-        print("Error")
-
+    while True:
+        my_stream_listener = MyStreamListener()
+        my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
+        try:
+            my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
+        except tweepy.RateLimitError:
+            print("Error")
+            continue
+        time.sleep(10)
 def harvestTweets():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
