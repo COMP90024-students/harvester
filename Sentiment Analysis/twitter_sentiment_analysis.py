@@ -17,7 +17,7 @@ analyser = SentimentIntensityAnalyzer()
 def sentiment_analyzer_scores(text):
     score = analyser.polarity_scores(text)
     lb = score['compound']
-    polarity_score
+    polarity_score=0
     if lb >= 0.05:
         polarity_score=1
     elif (lb > -0.05) and (lb < 0.05):
@@ -49,49 +49,16 @@ def clean_tweets(lst):
 
 
 def tweet_sentiment(text):
-  tweet_text=clean_tweets(tweet_)
-			 tweetsList.append(tweet_text)
-			 sentiment_score=sentiment_analyzer_scores(tweet_text)
-             
-             return 
+    #cleaning tweet
+    tweet_text=clean_tweets(text)
+    #get the ploarity degree and its percentage
+    polarity_score,polarity_percentage=sentiment_analyzer_scores(tweet_text)
+    
+    return polarity_score,polarity_percentage
+        
   
-def twitter_dict(file_name) :
-
-   
-    
-	tweetsList=list()
-	sentiments_scores=list()
-	
-	file =file_name 
-	
-    
-	with open(file, 'r', encoding='utf-8',errors='ignore') as load:
-		for tweets in load:
-			 try:
-					if(tweets[-2:-1]==','):
-						 twitter_data=json.loads(tweets[:-2])
-					else:
-						twitter_data=json.loads(tweets[:-1])
-			 except Exception:
-					continue
-                  
-			 tweet_=twitter_data['doc']['text']
-			 
-			 tweet_text=clean_tweets(tweet_)
-			 tweetsList.append(tweet_text)
-			 sentiment_score=sentiment_analyzer_scores(tweet_text)
-			
-			 sentiments_scores.append(sentiment_score)
-            
-	return tweetsList,sentiments_scores         
-             
-             
-			 
-             
-tweets,sentiments=twitter_dict("tinyTwitter.json") 
-
-df = pd.DataFrame(tweets,columns = ["Text"])
-df["Sentiment"]=sentiments
+#example
+tweet="I’m still not sure about that new blue Big Ben colour scheme. Even if it is the long-lost original one. Oh - happy new year btw 👍"
+print(tweet_sentiment(tweet))
 
 
-df.to_csv (r'twitter_sentiment_analysis_results.csv', index = False, header=True)
