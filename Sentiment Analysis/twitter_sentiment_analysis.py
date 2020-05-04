@@ -7,6 +7,7 @@ import string
 import re
 import numpy as np
 import pandas as pd
+
 #------------------------------------
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 analyser = SentimentIntensityAnalyzer()
@@ -58,7 +59,7 @@ def tweet_sentiment(text):
         
   
 #example
-tweet="I’m still not sure about that new blue Big Ben colour scheme. Even if it is the long-lost original one. Oh - happy new year btw 👍"
+tweet="I’m still not sure about that new blue Big Ben colour scheme. Even if it is the long-lost original one"
 print(tweet_sentiment(tweet))
 
 
