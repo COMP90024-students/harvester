@@ -8,96 +8,50 @@ from textblob import TextBlob
 
 from tweepy.streaming import StreamListener
 
-#Local Server
-couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
-global db
+# Local Server
+couch = couchdb.Server('http://admin:Cad1020*@127.0.0.1:5984')
+global db_stream
 global db_rep
-db = couch['db_test']
+global db_quo
+db_stream = couch['db_streamer']
 db_rep = couch['db_replies']
+db_quo = couch['db_quoted']
 
 API_KEY = 'Y9QPnFuofPJDysYtfq3OJrIlp'
 API_SECRET_KEY = '4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj'
 ACCESS_TOKEN = '1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac'
 ACCESS_TOKEN_SECRET = 'K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC'
 
-POSITIVE_SENTIMENT = 1
-NEGATIVE_SENTIMENT = -1
-NEUTRAL_SENTIMENT = 0
-
 AUS_LAT_MIN = -44
 AUS_LON_MIN = 110
 AUS_LAT_MAX = -9
-AUS_LON_MAX =156
-
-TOPIC_ONE = ['covid app', 'covidsafe', 'safe app', 'safeapp', 'tracing app', 'tracking app', 'covid safe app', 'coronavirus app', 'covid19 app']
-TOPIC_TWO = ['scottmorrisonmp', 'scomo', 'morrison', 'government', 'gov', 'jobseeker', 'jobkeeper', 'unemployment',
-             'minister', 'parliament', 'corruption', 'pm', 'premier', 'victorians', 'govt', 'danielandrewsmp', 'scotty',
-             'auspol', 'greghuntmp', 'auswake', 'peterdutton', 'economy', 'lockdown', 'politicians', 'politics',
-             'andrews', 'danandrews', 'political', 'goverments', 'health', 'school', 'schools', 'dan tehan', 'jennymikakos', 'mikakos',
-             'governors', 'governor', 'teachers', 'dantehanwannon', 'servicesgovau', 'job seeker', 'job keeper']
-TOPIC_THREE = ['app']
+AUS_LON_MAX = 156
 
 
 class MyStreamListener(tweepy.StreamListener):
     def on_data(self, data):
-        data = json.loads(data)
-        if data['in_reply_to_status_id'] is not None:
-            saveReply(data)
+        tweet = json.loads(data)
+        reply = tweet['in_reply_to_status_id']
+        try:
+            quote = tweet['quoted_status_id']
+        except:
+            quote = None
+        if reply is not None:
+            saveReply(tweet)
+        if quote is not None:
+            saveQuoted(tweet)
         else:
-            saveTweetInDatabase(data)
+            saveTweetInDatabase(tweet)
 
     def on_error(self, status):
         print("Streaming error")
+
 
 def setCredentials():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     return tweepy.API(auth)
 
-def inTopic(tweet):
-    tweet = tweet.split()
-    flag_one = False
-    flag_two = False
-    flag_three = False
-    number = 0
-    for word in TOPIC_ONE:
-        if word in tweet:
-            flag_one = True
-            break
-    for word in TOPIC_TWO:
-        if word in tweet:
-            flag_two = True
-            break
-    for word in TOPIC_THREE:
-        if word in tweet:
-            flag_three = True
-            break
-    if flag_three == True:
-        number = 4
-    if flag_one == True and flag_two == True:
-        number = 3
-    elif flag_one == False and flag_two == True:
-        number = 2
-    elif flag_one == True and not flag_two == False:
-        number = 1
-    else:
-        number = 0
-    return number
-
-def cleanTweet(tweet):
-    tweet = re.sub(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+", '', tweet, flags=re.MULTILINE)
-    tweet = re.sub('[^A-Za-z0-9]+', ' ', tweet)
-    tweet = tweet.lower()
-    return tweet
-
-def getSentiment(text):
-    blob = TextBlob(text)
-    sentiment = blob.sentiment.polarity
-    if sentiment > 0:
-        return POSITIVE_SENTIMENT
-    elif sentiment < 0:
-        return NEGATIVE_SENTIMENT
-    return NEUTRAL_SENTIMENT
 
 def saveReply(tweet):
     pro_tweet = {}
@@ -107,40 +61,34 @@ def saveReply(tweet):
     if idTweet not in db_rep:
         db_rep[idTweet] = pro_tweet
 
-def saveTweetInDatabase(tweet):
-    print(tweet)
+
+def saveQuoted(tweet):
     pro_tweet = {}
-    #Determines fields to save in json record
+    idTweet = tweet['quoted_status_id_str']
+    pro_tweet['tweetID_quote'] = tweet['id_str']
+    pro_tweet['status'] = 0
+    if idTweet not in db_quo:
+        db_quo[idTweet] = pro_tweet
+
+
+def saveTweetInDatabase(tweet):
     idTweet = tweet['id_str']
-
-    pro_tweet['creation_date'] = tweet['created_at']
-    pro_tweet['text'] = cleanTweet(tweet['text'])
-
-    pro_tweet['tweet_sentiment'] = getSentiment(pro_tweet['text'])
-
-    pro_tweet['userId'] = tweet['user']['id_str']
-    pro_tweet['username'] = tweet['user']['name']
-    pro_tweet['screen_name'] = tweet['user']['screen_name']
-    pro_tweet['user_location'] = tweet['user']['location']
-    pro_tweet['followers_count'] = tweet['user']['followers_count']
-    pro_tweet['geo_enabled'] = tweet['user']['geo_enabled']
-
-    pro_tweet['place'] = tweet['place']
-    pro_tweet['geo'] = tweet['geo']
-    pro_tweet['coordinates'] = tweet['coordinates']
-    pro_tweet['topic'] = inTopic(pro_tweet['text'])
-    #Save json record in couchdb
-    if idTweet not in db and pro_tweet['topic'] > 0:
-        db[idTweet] = pro_tweet
+    if idTweet not in db_stream:
+        db_stream[idTweet] = tweet
         print(idTweet)
+
 
 def tweetProcessor(api):
     my_stream_listener = MyStreamListener()
-    my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
+    my_stream = tweepy.Stream(auth=api.auth, listener=my_stream_listener)
     try:
-        my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
+        my_stream.filter(locations=[AUS_LON_MIN, AUS_LAT_MIN, AUS_LON_MAX, AUS_LAT_MAX], languages=[None, 'und', 'en'],
+                         is_async=True)
     except:
-        tweetProcessor(api)
+        time.sleep(10)
+        harvestTweets()
+
+
 def harvestTweets():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
@@ -148,5 +96,8 @@ def harvestTweets():
     api_interface = setCredentials()
     tweetProcessor(api_interface)
 
+
 if __name__ == '__main__':
-    harvestTweets()
+    while True:
+        harvestTweets()
+        time.sleep(10)

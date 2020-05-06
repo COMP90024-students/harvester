@@ -13,11 +13,21 @@ services:
     volumes:
       - "volume-0:/opt/couchdb/data"
 
-  harvester:
+  harvester-stream:
     image: harvester
     build:
       context: .
       dockerfile: ./stream/Dockerfile
+    volumes:
+      - ./harvester:/opt/harvester
+    depends_on:
+      - couchdb
+
+  harvester-search:
+    image: harvester
+    build:
+      context: .
+      dockerfile: ./search/Dockerfile
     volumes:
       - ./harvester:/opt/harvester
     depends_on:
