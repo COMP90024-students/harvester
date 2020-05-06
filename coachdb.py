@@ -1,21 +1,29 @@
 import couchdb
 #Local Server
-couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
+couch = couchdb.Server('http://@115.146.95.10:5984')
 
 #Remote Server
 #couch = couchdb.Server('server name ')
 #Si tiene usuario y contrasenia
 #couch = couchdb.Server('username:password@server name ')
-
+#db = couch['db_test']
 #Create database
-#db = couch.create('db_test')
+#db = couch.create('db_testrep')
+db = couch['db_testrep']
 #If using existing one
+for row in db:
+    r = db[row]
+    print(r['created'])
 
+'''
 db = couch['db_test']
 
 #print(list(db.view('tweet/userID-view')['key']))
 for row in db.view('tweet/userID-view'):
     row['key']
+'''
+
+#1257257661675958273
 '''
 db['100'] = {'hola': 'hola'}
 
