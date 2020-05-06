@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  couchdb:
+    image: couchdb:latest
+    environment:
+      COUCHDB_PASSWORD: admin
+      COUCHDB_USER: admin
+      NODENAME: couchdb.docker.com
+    ports:
+      - "5984:5984"
+      - "5986:5986"
+    volumes:
+      - "volume-0:/opt/couchdb/data"
+
+  harvester:
+    image: harvester
+    build:
+      context: .
+      dockerfile: ./stream/Dockerfile
+    volumes:
+      - ./harvester:/opt/harvester
+    depends_on:
+      - couchdb
+
+volumes:
+  volume-0:
