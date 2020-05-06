@@ -1,12 +1,8 @@
-import os
 import tweepy
-import json
 import time
 import couchdb
 import re
 from textblob import TextBlob
-
-from tweepy.streaming import StreamListener
 
 #Local Server
 couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
@@ -24,65 +20,24 @@ POSITIVE_SENTIMENT = 1
 NEGATIVE_SENTIMENT = -1
 NEUTRAL_SENTIMENT = 0
 
-AUS_LAT_MIN = -44
-AUS_LON_MIN = 110
-AUS_LAT_MAX = -9
-AUS_LON_MAX =156
-
 TOPIC_ONE = ['covid app', 'covidsafe', 'safe app', 'safeapp', 'tracing app', 'tracking app', 'covid safe app', 'coronavirus app', 'covid19 app']
 TOPIC_TWO = ['scottmorrisonmp', 'scomo', 'morrison', 'government', 'gov', 'jobseeker', 'jobkeeper', 'unemployment',
              'minister', 'parliament', 'corruption', 'pm', 'premier', 'victorians', 'govt', 'danielandrewsmp', 'scotty',
              'auspol', 'greghuntmp', 'auswake', 'peterdutton', 'economy', 'lockdown', 'politicians', 'politics',
              'andrews', 'danandrews', 'political', 'goverments', 'health', 'school', 'schools', 'dan tehan', 'jennymikakos', 'mikakos',
-             'governors', 'governor', 'teachers', 'dantehanwannon', 'servicesgovau', 'job seeker', 'job keeper']
-TOPIC_THREE = ['app']
+             'governors', 'governor', 'teachers', 'dantehanwannon']
 
-
-class MyStreamListener(tweepy.StreamListener):
-    def on_data(self, data):
-        data = json.loads(data)
-        if data['in_reply_to_status_id'] is not None:
-            saveReply(data)
-        else:
-            saveTweetInDatabase(data)
-
-    def on_error(self, status):
-        print("Streaming error")
+def setTopics():
+    QUERY_TOPIC = []
+    QUERY_TOPIC.append(TOPIC_ONE)
+    QUERY_TOPIC.append(TOPIC_TWO)
+    #QUERY_TOPIC.append(TOPIC_THREE)
+    return QUERY_TOPIC
 
 def setCredentials():
     auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     return tweepy.API(auth)
-
-def inTopic(tweet):
-    tweet = tweet.split()
-    flag_one = False
-    flag_two = False
-    flag_three = False
-    number = 0
-    for word in TOPIC_ONE:
-        if word in tweet:
-            flag_one = True
-            break
-    for word in TOPIC_TWO:
-        if word in tweet:
-            flag_two = True
-            break
-    for word in TOPIC_THREE:
-        if word in tweet:
-            flag_three = True
-            break
-    if flag_three == True:
-        number = 4
-    if flag_one == True and flag_two == True:
-        number = 3
-    elif flag_one == False and flag_two == True:
-        number = 2
-    elif flag_one == True and not flag_two == False:
-        number = 1
-    else:
-        number = 0
-    return number
 
 def cleanTweet(tweet):
     tweet = re.sub(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+", '', tweet, flags=re.MULTILINE)
@@ -107,15 +62,13 @@ def saveReply(tweet):
     if idTweet not in db_rep:
         db_rep[idTweet] = pro_tweet
 
-def saveTweetInDatabase(tweet):
-    print(tweet)
+def saveTweetInDatabase(tweet, number):
     pro_tweet = {}
     #Determines fields to save in json record
     idTweet = tweet['id_str']
 
     pro_tweet['creation_date'] = tweet['created_at']
-    pro_tweet['text'] = cleanTweet(tweet['text'])
-
+    pro_tweet['text'] = cleanTweet(tweet['full_text'])
     pro_tweet['tweet_sentiment'] = getSentiment(pro_tweet['text'])
 
     pro_tweet['userId'] = tweet['user']['id_str']
@@ -128,23 +81,46 @@ def saveTweetInDatabase(tweet):
     pro_tweet['place'] = tweet['place']
     pro_tweet['geo'] = tweet['geo']
     pro_tweet['coordinates'] = tweet['coordinates']
-    pro_tweet['topic'] = inTopic(pro_tweet['text'])
+
+    pro_tweet['topic'] = number
+
     #Save json record in couchdb
-    if idTweet not in db and pro_tweet['topic'] > 0:
+    #if idTweet not in db:
+    if idTweet not in db:
         db[idTweet] = pro_tweet
-        print(idTweet)
 
-def tweetProcessor(api):
-    my_stream_listener = MyStreamListener()
-    my_stream = tweepy.Stream(auth = api.auth, listener=my_stream_listener)
-    try:
-        my_stream.filter(locations=[AUS_LON_MIN,AUS_LAT_MIN,AUS_LON_MAX,AUS_LAT_MAX], languages=[None, 'und', 'en'], is_async=True)
-    except:
-        tweetProcessor(api)
+def tweetProcessor(api_interface):
+    topics = setTopics()
+    for row in db_rep:
+        doc = db_rep[row]
+        print(row)
+        if doc['status'] <= 1:
+            for topic in topics:
+                if topic == TOPIC_ONE:
+                    number = 1
+                elif topic == TOPIC_TWO:
+                    number = 2
+                else:
+                    number = 3
+                try:
+                    statusOne = api_interface.get_status(row, tweet_mode="extended")
+                    tweet = cleanTweet(statusOne._json['full_text'])
+                    tweet = tweet.split()
+                    for element in tweet:
+                        if element in topic:
+                            saveTweetInDatabase(statusOne._json, number)
+                            print(row)
+                            statusTwo = api_interface.get_status(db_rep[row]['tweetID_reply'], tweet_mode="extended")
+                            print(statusOne._json['full_text'] + " " +  statusTwo._json['full_text'])
+                            statusTwo._json['full_text'] = statusOne._json['full_text'] + " " +  statusTwo._json['full_text']
+                            saveTweetInDatabase(statusTwo._json, number)
+                            print('good')
+                except:
+                    next
+        doc['status'] = 2
+        db_rep.save(doc)
+
 def harvestTweets():
-    auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-
     api_interface = setCredentials()
     tweetProcessor(api_interface)
 
