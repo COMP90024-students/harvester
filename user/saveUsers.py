@@ -1,6 +1,6 @@
 import couchdb
 
-couch = couchdb.Server('http://admin:Cad17181046@127.0.0.1:5984')
+couch = couchdb.Server('http://admin:admin*@115.146.95.10:5984')
 db_stream = couch['db_streamer']
 db_hist = couch['db_historic']
 db_user = couch['db_user']

@@ -1,0 +1,5 @@
+couchdb
+tweepy
+time
+json
+tweepy.streaming

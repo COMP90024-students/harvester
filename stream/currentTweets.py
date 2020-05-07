@@ -1,15 +1,11 @@
-import os
 import tweepy
 import json
 import time
 import couchdb
-import re
-from textblob import TextBlob
-
 from tweepy.streaming import StreamListener
 
 # Local Server
-couch = couchdb.Server('http://admin:Cad1020*@127.0.0.1:5984')
+couch = couchdb.Server('http://admin:admin*@115.146.95.10:5984')
 global db_stream
 global db_rep
 global db_quo
@@ -82,22 +78,14 @@ def tweetProcessor(api):
     my_stream_listener = MyStreamListener()
     my_stream = tweepy.Stream(auth=api.auth, listener=my_stream_listener)
     try:
-        my_stream.filter(locations=[AUS_LON_MIN, AUS_LAT_MIN, AUS_LON_MAX, AUS_LAT_MAX], languages=[None, 'und', 'en'],
-                         is_async=True)
+        my_stream.filter(locations=[AUS_LON_MIN, AUS_LAT_MIN, AUS_LON_MAX, AUS_LAT_MAX], languages=[None, 'und', 'en'],is_async=True)
     except:
         time.sleep(10)
         harvestTweets()
 
-
 def harvestTweets():
-    auth = tweepy.OAuthHandler(API_KEY, API_SECRET_KEY)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-
     api_interface = setCredentials()
     tweetProcessor(api_interface)
 
-
 if __name__ == '__main__':
-    while True:
-        harvestTweets()
-        time.sleep(10)
+    harvestTweets()

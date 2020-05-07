@@ -4,7 +4,7 @@ import couchdb
 
 
 #Local Server
-couch = couchdb.Server('http://admin:Cad1020*@127.0.0.1:5984')
+couch = couchdb.Server('http://admin:admin*@115.146.95.10:5984')
 global db_hist
 global db_rep
 global db_quo
