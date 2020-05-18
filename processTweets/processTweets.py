@@ -16,8 +16,6 @@ TOPIC_TWO = ['scottmorrisonmp', 'scomo', 'morrison', 'government', 'gov', 'jobse
              'andrews', 'danandrews', 'political', 'goverments', 'health', 'school', 'schools', 'dan tehan', 'jennymikakos', 'mikakos',
              'governors', 'governor', 'teachers', 'dantehanwannon', 'servicesgovau', 'job seeker', 'job keeper']
 
-global geolocator
-geolocator = Nominatim()
 
 POSITIVE_SENTIMENT = 1
 NEGATIVE_SENTIMENT = -1
@@ -32,6 +30,12 @@ couch = couchdb.Server('http://admin:Cad1020*@127.0.0.1:5984')
 global db_hist
 db_hist = couch['db_historic']
 
+global db_raw
+db_raw = couch['db_rawproc']
+
+global geolocator
+geolocator = Nominatim(user_agent="my-application")
+
 def getMainText(tweet):
     try:
         text = tweet['full_text']
@@ -41,14 +45,48 @@ def getMainText(tweet):
 
 
 def getLocation(tweet):
+    loc = {}
     if tweet['geo'] is not None:
         location = tweet['geo']
         coordinates = location['coordinates']
-        return location
+        location = geolocator.reverse(str(coordinates[0]) + ',' + str(coordinates[1]))
+        location = geolocator.geocode(location.address)
+        loc['lat'] = location.latitude
+        loc['lon'] = location.longitude
+        location = location.address.split()
+        loc['suburb'] = location[1]
+        loc['city'] = location[2]
+        loc['state'] = location[4]
+        loc['country'] = location[5]
+        return loc
     elif tweet['place'] is not None:
-        location = {'place_type': tweet['place']['place_type'], 'name': tweet['place']['full_name'],
-                    'full_name': tweet['place']['bounding_box']['coordinates']}
-        return location
+        if tweet['place']['place_type'] in ['city', 'poi']:
+            name = tweet['place']['full_name'].split()
+            location = geolocator.geocode(name)
+            loc['lat'] = location.latitude
+            loc['lon'] = location.longitude
+            location = location.address.split(', ')
+            if len(location) == 3:
+                loc['city'] = location[0]
+                loc['state'] = location[1]
+                loc['country'] = location[2]
+            elif len(location) == 4:
+                loc['city'] = location[0]
+                loc['state'] = location[1]
+                loc['country'] = location[3]
+            elif len(location) == 5:
+                loc['city'] = location[0]
+                loc['state'] = location[2]
+                loc['country'] = location[4]
+        if tweet['place']['place_type'] in ['admin']:
+            name = tweet['place']['full_name'].split()
+            location = geolocator.geocode(name)
+            loc['lat'] = location.latitude
+            loc['lon'] = location.longitude
+            location = location.address.split(', ')
+            loc['state'] = location[0]
+            loc['country'] = location[1]
+        return loc
     return None
 
 
@@ -93,38 +131,41 @@ def getSentiment(text):
 def getDate(tweet):
     date = tweet['created_at'].split()
     date = datetime.datetime(int(date[5]), MONTH[date[1]], int(date[2]))
-    return date
+    return date.month, date.year
 
 
 def tweetProcessor():
     for row in db_hist:
-        tweet = db_hist['1009324695504801792']
-        location = getLocation(tweet)
-        if location is None:
-            next
-        text = getMainText(tweet)
-        try:
-            retweet = tweet['retweeted_status']['text']
-            text = retweet + text
-        except:
-            next
-        try:
-            quote = tweet['tweet_quoted_to']
-            text = quote + text
-        except:
-            next
-        try:
-            reply = tweet['tweet_replied_to']
-            text = reply + text
-        except:
-            next
-        text_topic = cleanTweet(text)
-        topic = filterTopic(text_topic)
-        if topic:
-            next
-        sentiment = getSentiment(cleanTweetSentiment(text))
-        if (location is not None) and (topic > 0):
-            print(row, getDate(tweet), location, topic, sentiment)
+        if row in db_raw:
+            id = db_raw[row]
+            tweet = db_hist[row]
+            location = getLocation(tweet)
+            if location is None:
+                next
+            text = getMainText(tweet)
+            try:
+                retweet = tweet['retweeted_status']['text']
+                text = retweet + text
+            except:
+                next
+            try:
+                quote = tweet['tweet_quoted_to']
+                text = quote + text
+            except:
+                next
+            try:
+                reply = tweet['tweet_replied_to']
+                text = reply + text
+            except:
+                next
+            text_topic = cleanTweet(text)
+            topic = filterTopic(text_topic)
+            if topic:
+                next
+            sentiment = getSentiment(cleanTweetSentiment(text))
+            if (location is not None) and (topic > 0):
+                print(row, getDate(tweet), location, topic, sentiment)
+            db_raw.delete(id)
     #sid = SentimentIntensityAnalyzer()
     #ss = sid.polarity_scores(textSentiment)
     #print(ss)
@@ -160,3 +201,37 @@ def tweetProcessor():
     '''
 if __name__ == '__main__':
     tweetProcessor()
+16728439
+ssh cdavaloscast@spartan.hpc.unimelb.edu.au
+neskyz-8Dyfva-qytsah
+
+source /usr/local/module/spartan_new.sh
+module load gcc/8.3.0
+module load python/3.7.4
+module load openmpi/3.1.4
+pip install geopy --user
+pip install couchdb --user
+
+cd Assignment2
+python tweetsFromReplies.py
+python currentTweets.py
+
+mpirun -n 8 python processParallelTweets.py
+
+sbatch 1N_8C_Process.slurm
+
+curl "http://45.113.232.90/couchdbro/twitter/_design/twitter/_view/summary" \
+-G \
+--data-urlencode 'start_key=["melbourne",2014,1,1]' \
+--data-urlencode 'end_key=["melbourne",2019,12,31]' \
+--data-urlencode 'reduce=false' \
+--data-urlencode 'include_docs=true' \
+--user "readonly:ween7ighai9gahR6" \
+-o /Volumes/Transcend/twitter.json
+
+
+
+mpirun -n 4 python processParallelTweets.py
+
+
+ cd processTweets

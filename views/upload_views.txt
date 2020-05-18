@@ -1,0 +1,23 @@
+curl -X PUT http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/suburb --data-binary @suburb.json
+
+curl -X PUT http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/city --data-binary @city.json
+
+curl -X PUT http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/county --data-binary @county.json
+
+curl -X PUT http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/state --data-binary @state.json
+
+curl -X PUT http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/country --data-binary @country.json
+
+curl -X GET http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/ui_views
+
+curl -X GET http://admin:MGZjZGU5N@45.113.235.78:5984/ui_db/_design/ui_views/?rev=1-706b924c9bfbd811d95b7f46acafd9bd
+
+1-706b924c9bfbd811d95b7f46acafd9bd
+curl -X DELETE http://admin:Cad1020*@127.0.0.1:5984/db_testrep/_design/a/?rev=1-c8b26ef9155656682051e9cb0fe9fab2
+
+
+curl http://admin:MGZjZGU5N@45.113.235.78:5984/_all_docs?key=_design/views&include_docs=true
+
+
+
+curl -X DELETE http://admin:MGZjZGU5N@45.113.235.78:5984/db_testrep/_design/suburb/?rev=1-a85f70467cf657ae23b4f78467322deb

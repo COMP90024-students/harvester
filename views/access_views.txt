@@ -1,0 +1,41 @@
+curl "http://45.113.235.78:5984/ui_db/_design/suburb/_view/suburb_view" \
+-G \
+--data-urlencode 'reduce=true' \
+--data-urlencode 'group=true' \
+--data-urlencode 'include_docs=false' \
+--user "admin:MGZjZGU5N" \
+-o /usr/local/opt/curl/bin/twitter.json
+
+
+curl "http://45.113.235.78:5984/ui_db/_design/city/_view/city_view" \
+-G \
+--data-urlencode 'reduce=true' \
+--data-urlencode 'group=true' \
+--data-urlencode 'include_docs=false' \
+--user "admin:MGZjZGU5N" \
+-o /usr/local/opt/curl/bin/twitter.json
+
+
+curl "http://45.113.235.78:5984/ui_db/_design/county/_view/county_view" \
+-G \
+--data-urlencode 'reduce=true' \
+--data-urlencode 'group=true' \
+--data-urlencode 'include_docs=false' \
+--user "admin:MGZjZGU5N" \
+-o /usr/local/opt/curl/bin/twitter.json
+
+curl "http://45.113.235.78:5984/ui_db/_design/state/_view/state_view" \
+-G \
+--data-urlencode 'reduce=true' \
+--data-urlencode 'group=true' \
+--data-urlencode 'include_docs=false' \
+--user "admin:MGZjZGU5N" \
+-o /usr/local/opt/curl/bin/twitter.json
+
+curl "http://45.113.235.78:5984/ui_db/_design/country/_view/country_view" \
+-G \
+--data-urlencode 'reduce=true' \
+--data-urlencode 'group=true' \
+--data-urlencode 'include_docs=false' \
+--user "admin:MGZjZGU5N" \
+-o /usr/local/opt/curl/bin/twitter.json

@@ -1,0 +1,10 @@
+{
+  "_id": "_design/city",
+  "views": {
+    "city_view": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if(doc.location.city && doc.sentiment != 0 && doc.topic != 0) {\n    emit([doc.year, doc.topic, doc.polarity, doc.location], 1);\n}\n}"
+    }
+  },
+  "language": "javascript"
+}

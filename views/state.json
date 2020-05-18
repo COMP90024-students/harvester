@@ -1,0 +1,10 @@
+{
+  "_id": "_design/state",
+  "views": {
+    "state_view": {
+      "reduce": "_count",
+      "map": "function (doc) {\n  if(doc.location.state && doc.sentiment != 0 && doc.topic != 0) {\n    emit([doc.year, doc.topic, doc.polarity, doc.location], 1);\n}\n}"
+    }
+  },
+  "language": "javascript"
+}
