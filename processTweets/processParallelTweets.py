@@ -214,7 +214,7 @@ def tweetProcessor(tweet):
 def process_json_tweets(rank, processes = 8):
     db_hist,db_ui = db_connection()
     for i, line in enumerate(db_hist):
-        if i%processes == rank:
+        if i%processes == rank and i > 520000:
             print(i)
             tweet = db_hist[line]
             #try:
