@@ -1,6 +1,5 @@
 #------------------------------------
 import json
-import numpy as np 
 import itertools
 import collections
 import string
@@ -45,6 +44,7 @@ def clean_tweets(lst):
     lst = remove_pattern(lst, "https?://[A-Za-z0-9./]*")
       # remove special characters, numbers, punctuations (except for #)
     lst = lst.replace("[^a-zA-Z#]", " ")
+    print(lst)
     return lst
 
 
@@ -59,7 +59,7 @@ def tweet_sentiment(text):
         
   
 #example
-tweet="I’m still not sure about that new blue Big Ben colour scheme. Even if it is the long-lost original one"
+tweet="RT @hola #Agtwittterchat K-line speedtillers! Pros and cons. Love be to hear to learn about there place in a cropping or mixed farm enterprise? #incorporation #stubble #lime #leveling comments?"
 print(tweet_sentiment(tweet))
 
 
