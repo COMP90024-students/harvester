@@ -217,17 +217,16 @@ def process_json_tweets(rank, processes = 8):
         if i%processes == rank and i > 520000:
             print(i)
             tweet = db_hist[line]
-            #try:
-            #    flag = tweet['flag']
-            #    print(flag)
-            #except:
-            if tweet['flag'] == 0:
+            try:
+                flag = tweet['flag']
+            except:
                 pro_tweet = tweetProcessor(tweet)
                 if line not in db_ui and pro_tweet is not None:
                     print(i, line)
                     db_ui[str(line)] = pro_tweet
                     tweet['flag'] = 1
                     db_hist.save(tweet)
+                continue
 
 def master_data_processor(comm):
     # Get rank and size
