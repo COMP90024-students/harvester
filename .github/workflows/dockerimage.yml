@@ -18,7 +18,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE: karimoff/team19-website
+  IMAGE: karimoff/team19-harvester-stream
   IMAGE_WITH_VERSION: $IMAGE:$GITHUB_SHA
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
       # Build the image with tag
       - name: Build, Tag
         run: |
-          docker build -t $IMAGE:$GITHUB_SHA -f ./flask/Dockerfile ./flask
+          docker build -t $IMAGE:$GITHUB_SHA -f ./stream/Dockerfile ./stream
           docker tag $IMAGE:$GITHUB_SHA $IMAGE:latest
 
       # Push the image to Docker Hub
