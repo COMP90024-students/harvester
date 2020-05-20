@@ -16,18 +16,16 @@ services:
   harvester-stream:
     image: harvester
     build:
-      context: .
-      dockerfile: ./stream/Dockerfile
-    volumes:
-      - ./harvester:/opt/harvester
-    depends_on:
-      - couchdb
-
-  harvester-search:
-    image: harvester
-    build:
-      context: .
-      dockerfile: ./search/Dockerfile
+      context: ./stream
+    environment:
+      TWITTER_API_KEY: Y9QPnFuofPJDysYtfq3OJrIlp
+      TWITTER_API_SECRET_KEY: 4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj
+      TWITTER_ACCESS_TOKEN: 1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac
+      TWITTER_ACCESS_TOKEN_SECRET: K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
+      COUCHDB_HOST: couchdb
+      COUCHDB_PORT: 5984
     volumes:
       - ./harvester:/opt/harvester
     depends_on:

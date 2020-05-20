@@ -3,9 +3,15 @@ import json
 import time
 import couchdb
 from tweepy.streaming import StreamListener
+import os
 
-# Local Server
-couch = couchdb.Server('http://admin:admin*@115.146.95.10:5984')
+# configuration
+COUCHDB_USER = os.environ.get("COUCHDB_USER", "admin")
+COUCHDB_PASSWORD = os.environ.get("COUCHDB_PASSWORD", "admin")
+COUCHDB_HOST = os.environ.get("COUCHDB_HOST", "localhost")
+COUCHDB_PORT = os.environ.get("COUCHDB_PORT", "5984")
+
+couch = couchdb.Server(f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{COUCHDB_HOST}:{COUCHDB_PORT}')
 global db_stream
 global db_rep
 global db_quo
@@ -13,10 +19,10 @@ db_stream = couch['db_streamer']
 db_rep = couch['db_replies']
 db_quo = couch['db_quoted']
 
-API_KEY = 'Y9QPnFuofPJDysYtfq3OJrIlp'
-API_SECRET_KEY = '4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj'
-ACCESS_TOKEN = '1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac'
-ACCESS_TOKEN_SECRET = 'K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC'
+API_KEY = os.environ["TWITTER_API_KEY"]
+API_SECRET_KEY = os.environ["TWITTER_API_SECRET_KEY"]
+ACCESS_TOKEN = os.environ["TWITTER_ACCESS_TOKEN"]
+ACCESS_TOKEN_SECRET = os.environ["TWITTER_ACCESS_TOKEN_SECRET"]
 
 AUS_LAT_MIN = -44
 AUS_LON_MIN = 110
