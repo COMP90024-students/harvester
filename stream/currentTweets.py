@@ -2,6 +2,7 @@ import tweepy
 import json
 import time
 import couchdb
+from couchdb.http import PreconditionFailed
 from tweepy.streaming import StreamListener
 import os
 
@@ -10,15 +11,6 @@ COUCHDB_USER = os.environ.get("COUCHDB_USER", "admin")
 COUCHDB_PASSWORD = os.environ.get("COUCHDB_PASSWORD", "admin")
 COUCHDB_HOST = os.environ.get("COUCHDB_HOST", "localhost")
 COUCHDB_PORT = os.environ.get("COUCHDB_PORT", "5984")
-
-couch = couchdb.Server(f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{COUCHDB_HOST}:{COUCHDB_PORT}')
-global db_stream
-global db_rep
-global db_quo
-db_stream = couch['db_streamer']
-db_rep = couch['db_replies']
-db_quo = couch['db_quoted']
-
 API_KEY = os.environ["TWITTER_API_KEY"]
 API_SECRET_KEY = os.environ["TWITTER_API_SECRET_KEY"]
 ACCESS_TOKEN = os.environ["TWITTER_ACCESS_TOKEN"]
@@ -28,6 +20,28 @@ AUS_LAT_MIN = -44
 AUS_LON_MIN = 110
 AUS_LAT_MAX = -9
 AUS_LON_MAX = 156
+
+couch = couchdb.Server(f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{COUCHDB_HOST}:{COUCHDB_PORT}')
+
+global db_stream
+global db_rep
+global db_quo
+
+
+def create_db(client, name):
+    """ create a database with given name or return existing database.
+    """
+    try:
+        db = client.create(name)
+    except PreconditionFailed:
+        db = client[name]
+    
+    return db
+
+
+db_stream = create_db(couch, 'db_streamer')
+db_rep = create_db(couch, 'db_replies')
+db_quo = create_db(couch, 'db_quoted')
 
 
 class MyStreamListener(tweepy.StreamListener):

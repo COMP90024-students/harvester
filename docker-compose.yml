@@ -17,7 +17,12 @@ services:
     image: harvester
     build:
       context: ./stream
+    command: sh -c "/wait && python currentTweets.py"
     environment:
+      WAIT_HOSTS: couchdb:5984
+      WAIT_HOSTS_TIMEOUT: 300
+      WAIT_SLEEP_INTERVAL: 30
+      WAIT_HOST_CONNECT_TIMEOUT: 30
       TWITTER_API_KEY: Y9QPnFuofPJDysYtfq3OJrIlp
       TWITTER_API_SECRET_KEY: 4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj
       TWITTER_ACCESS_TOKEN: 1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac
