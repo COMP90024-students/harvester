@@ -223,7 +223,7 @@ def process_json_tweets(rank, processes = 3):
     print('start')
     db_hist,db_ui,db_archive = db_connection()
     for i, line in enumerate(db_hist):
-        if i%processes == rank:
+        if i%processes == rank and i > 250000:
             print(i, line)
             tweet = db_hist[line]
             pro_tweet = tweetProcessor(tweet)
