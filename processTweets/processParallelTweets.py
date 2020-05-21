@@ -33,7 +33,7 @@ TOPIC_TWO = ['scottmorrisonmp', 'scomo', 'morrison', 'government', 'gov', 'jobse
              'markmcgowanmp', 'steven marshall', 'peter gutwein']
 
 global geolocator
-geolocator = Nominatim(user_agent="my-application", timeout=None)
+geolocator = Nominatim(user_agent="my-application", timeout=None, scheme='http')
 
 analyser = SentimentIntensityAnalyzer()
 
@@ -48,7 +48,8 @@ def db_connection():
     couch = couchdb.Server('http://admin:MGZjZGU5N@45.113.235.78:5984')
     db_hist = couch['db_historic']
     db_ui = couch['ui_db']
-    return db_hist,db_ui
+    db_archive = couch['archive_db']
+    return db_hist,db_ui, db_archive
 
 def getMainText(tweet):
     try:
@@ -150,6 +151,12 @@ def cleanTweet(tweet):
     tweet = tweet.lower()
     return tweet
 
+def cleanTweetSave(tweet):
+    tweet = re.sub(r"https?://[A-Za-z0-9./]*", '', tweet, flags=re.MULTILINE)
+    tweet = re.sub('\n', ' ', tweet)
+    tweet = re.sub('  ', ' ', tweet)
+    return tweet
+
 
 def cleanTweetSentiment(tweet):
     tweet = re.sub(r"https?://[A-Za-z0-9./]*", '', tweet, flags=re.MULTILINE)
@@ -186,17 +193,17 @@ def tweetProcessor(tweet):
   text = getMainText(tweet)
   try:
       retweet = tweet['retweeted_status']['text']
-      text = retweet + text
+      text = retweet + ' ' + text
   except:
       next
   try:
       quote = tweet['tweet_quoted_to']
-      text = quote + text
+      text = quote + ' ' + text
   except:
       next
   try:
       reply = tweet['tweet_replied_to']
-      text = reply + text
+      text = reply + ' ' + text
   except:
       next
   text_topic = cleanTweet(text)
@@ -204,45 +211,46 @@ def tweetProcessor(tweet):
   polarity, sentiment = sentiment_analyzer_scores(cleanTweetSentiment(text))
   data['polarity'] = polarity
   data['sentiment'] = sentiment
+  data['text'] = cleanTweetSave(text)
   data['month'],data['year'] = getDate(tweet)
   if (data['location'] is not None) and (data['topic'] > -1) :
       if data['location']['country'] == 'Australia' :
           return data
   return None
 
-#520000
-def process_json_tweets(rank, processes = 8):
-    db_hist,db_ui = db_connection()
+#562716
+def process_json_tweets(rank, processes = 3):
+    print('start')
+    db_hist,db_ui,db_archive = db_connection()
     for i, line in enumerate(db_hist):
-        if i%processes == rank and i > 520000:
-            print(i)
+        if i%processes == rank:
+            print(i, line)
             tweet = db_hist[line]
-            try:
-                flag = tweet['flag']
-            except:
-                pro_tweet = tweetProcessor(tweet)
-                if line not in db_ui and pro_tweet is not None:
-                    print(i, line)
-                    db_ui[str(line)] = pro_tweet
-                    tweet['flag'] = 1
-                    db_hist.save(tweet)
-                continue
+            pro_tweet = tweetProcessor(tweet)
+            if line not in db_ui and pro_tweet is not None:
+                print('added', i, line)
+                db_ui[str(line)] = pro_tweet
+            db_hist.delete(tweet)
+            db_archive[str(line)] = tweet
+            print('deleted', i, line)
+
+
 
 def master_data_processor(comm):
     # Get rank and size
     rank = comm.Get_rank()
     size = comm.Get_size()
-    process_json_tweets(rank, size)
+    process_json_tweets(rank)
 
 def slave_data_processor(comm):
-  # Get the current processor rank and size
-  rank = comm.Get_rank()
-  size = comm.Get_size()
+    # Get the current processor rank and size
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
-  process_json_tweets(rank)
-  # Wait for a communication from master processor to send the processed data
-  while True:
-    in_comm = comm.recv(source=MASTER_RANK, tag=rank)
+    process_json_tweets(rank)
+    # Wait for a communication from master processor to send the processed data
+    while True:
+        in_comm = comm.recv(source=MASTER_RANK, tag=rank)
 
 
 def main():
