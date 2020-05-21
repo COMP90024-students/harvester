@@ -1,3 +1,2 @@
 couchdb
 tweepy
-tweepy

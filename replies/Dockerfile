@@ -1,4 +1,19 @@
-FROM python:3
-COPY environment.txt ./
-RUN pip install --no-cache-dir -r environment.txt
-CMD ["python", "./tweetsFromReplies.py"]
+# Use the Python3.7.2 container image
+FROM python:3.7.2-stretch
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app 
+ADD . /app
+
+# Install the dependencies
+RUN pip install -r requirements.txt
+
+# Add docker-compose-wait tool
+ENV WAIT_VERSION 2.7.2
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERSION/wait /wait
+RUN chmod +x /wait
+
+# run the command to start process
+CMD ["python", "tweetsFromReplies.py"]

@@ -14,7 +14,7 @@ services:
       - "volume-0:/opt/couchdb/data"
 
   harvester-stream:
-    image: harvester
+    image: harvester-stream:latest
     build:
       context: ./stream
     command: sh -c "/wait && python currentTweets.py"
@@ -23,6 +23,29 @@ services:
       WAIT_HOSTS_TIMEOUT: 300
       WAIT_SLEEP_INTERVAL: 30
       WAIT_HOST_CONNECT_TIMEOUT: 30
+      TWITTER_API_KEY: Y9QPnFuofPJDysYtfq3OJrIlp
+      TWITTER_API_SECRET_KEY: 4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj
+      TWITTER_ACCESS_TOKEN: 1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac
+      TWITTER_ACCESS_TOKEN_SECRET: K3GhuJzCVgwrzM1g1PQ5LxCjYqR8Pssy3FV1zMZPIcGkC
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
+      COUCHDB_HOST: couchdb
+      COUCHDB_PORT: 5984
+    volumes:
+      - ./harvester:/opt/harvester
+    depends_on:
+      - couchdb
+
+  harvester-replies:
+    image: harvester-replies:latest
+    build:
+      context: ./replies
+    command: sh -c "/wait && python tweetsFromReplies.py"
+    environment:
+      WAIT_HOSTS: couchdb:5984
+      WAIT_HOSTS_TIMEOUT: 300
+      WAIT_SLEEP_INTERVAL: 20
+      WAIT_HOST_CONNECT_TIMEOUT: 10
       TWITTER_API_KEY: Y9QPnFuofPJDysYtfq3OJrIlp
       TWITTER_API_SECRET_KEY: 4KLD9lHOWVzG6TUmEORZ2gxW4kanXtsECoj0RIxu1Udnix4bpj
       TWITTER_ACCESS_TOKEN: 1031024454-17u1rln5FQWmh8DcJnCHbKMEZwOtqaxQCx9l2ac
