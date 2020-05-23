@@ -39,7 +39,7 @@ def create_db(client, name):
     return db
 
 
-db_stream = create_db(couch, 'db_streamer')
+db_stream = create_db(couch, 'db_historic')
 db_rep = create_db(couch, 'db_replies')
 db_quo = create_db(couch, 'db_quoted')
 
