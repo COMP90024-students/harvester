@@ -1,7 +1,8 @@
+import os
 import tweepy
 import time
 import couchdb
-
+from couchdb.http import PreconditionFailed
 
 # configuration
 COUCHDB_USER = os.environ.get("COUCHDB_USER", "admin")
