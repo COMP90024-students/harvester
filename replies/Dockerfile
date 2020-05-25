@@ -16,4 +16,4 @@ ADD https://github.com/ufoscout/docker-compose-wait/releases/download/$WAIT_VERS
 RUN chmod +x /wait
 
 # run the command to start process
-CMD ["python", "tweetsFromReplies.py"]
+CMD ["python", "main.py"]

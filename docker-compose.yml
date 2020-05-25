@@ -17,7 +17,7 @@ services:
     image: harvester-stream:latest
     build:
       context: ./stream
-    command: sh -c "/wait && python currentTweets.py"
+    command: sh -c "/wait && python main.py"
     environment:
       WAIT_HOSTS: couchdb:5984
       WAIT_HOSTS_TIMEOUT: 300
@@ -40,7 +40,7 @@ services:
     image: harvester-replies:latest
     build:
       context: ./replies
-    command: sh -c "/wait && python tweetsFromReplies.py"
+    command: sh -c "/wait && python main.py"
     environment:
       WAIT_HOSTS: couchdb:5984
       WAIT_HOSTS_TIMEOUT: 300
