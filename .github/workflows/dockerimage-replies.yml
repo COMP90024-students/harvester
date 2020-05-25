@@ -8,7 +8,7 @@
 #
 # 2. Change the values for the IMAGE, IMAGE_WITH_VERSION environment variables (below).
 
-name: Docker Image CI
+name: Replies Docker Image CI
 
 on:
   push:
@@ -18,7 +18,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE: karimoff/team19-harvester-stream
+  IMAGE: karimoff/team19-harvester-replies
   IMAGE_WITH_VERSION: $IMAGE:$GITHUB_SHA
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
       # Build the image with tag
       - name: Build, Tag
         run: |
-          docker build -t $IMAGE:$GITHUB_SHA -f ./stream/Dockerfile ./stream
+          docker build -t $IMAGE:$GITHUB_SHA -f ./replies/Dockerfile ./replies
           docker tag $IMAGE:$GITHUB_SHA $IMAGE:latest
 
       # Push the image to Docker Hub
